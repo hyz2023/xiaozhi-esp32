@@ -1,0 +1,15 @@
+{
+  "board_class": "Jc8048w550",
+  "target": "esp32s3",
+    "builds": [
+        {
+            "name": "Jc8048w550",
+            "sdkconfig_append": [
+                "CONFIG_SPIRAM_FETCH_INSTRUCTIONS=y",
+                "CONFIG_SPIRAM_RODATA=y",
+                "CONFIG_COMPILER_OPTIMIZATION_PERF=y",
+                "CONFIG_DATA_CACHE_LINE_SIZE=64"
+            ]
+        }
+    ]
+} 

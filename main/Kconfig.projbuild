@@ -255,6 +255,8 @@ choice BOARD_TYPE
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESP32_S3_1_54_MUMA
         bool "Spotpear ESP32-S3-1.54-MUMA"
+    config BOARD_TYPE_JC8048W550
+        bool "晶彩JC8048W550"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESP32_S3_1_28_BOX
         bool "Spotpear ESP32-S3-1.28-BOX"

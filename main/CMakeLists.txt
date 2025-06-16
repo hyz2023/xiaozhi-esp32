@@ -26,6 +26,7 @@ set(SOURCES "audio_codecs/audio_codec.cc"
             )
 
 set(INCLUDE_DIRS "." "display" "audio_codecs" "protocols" "audio_processing")
+list(APPEND INCLUDE_DIRS "$ENV{IDF_PATH}/components/esp_lcd/rgb/include")
 
 # 添加 IOT 相关文件
 file(GLOB IOT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/iot/things/*.cc)
@@ -187,6 +188,8 @@ elseif(CONFIG_BOARD_TYPE_ZHENGCHEN_1_54TFT_ML307)
     set(BOARD_TYPE "zhengchen-1.54tft-ml307")
 elseif(CONFIG_BOARD_TYPE_ESP32_S3_1_54_MUMA)
     set(BOARD_TYPE "sp-esp32-s3-1.54-muma")
+elseif(CONFIG_BOARD_TYPE_JC8048W550)
+    set(BOARD_TYPE "jc8048w550")
 elseif(CONFIG_BOARD_TYPE_ESP32_S3_1_28_BOX)
     set(BOARD_TYPE "sp-esp32-s3-1.28-box")
 elseif(CONFIG_BOARD_TYPE_OTTO_ROBOT)

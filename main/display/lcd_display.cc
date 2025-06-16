@@ -197,8 +197,32 @@ RgbLcdDisplay::RgbLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_h
             .avoid_tearing = true,
         }
     };
-    
+
+
+// 由于jc8048w550的显示性能问题，暂时不使用双缓冲区，调整采用XIP on PSRAM + RGB Bounce buffer的方案
+#if CONFIG_BOARD_TYPE_JC8048W550
+    ESP_LOGI(TAG, "Using jc8048w550 display configuration");
+    // ESP_LOGI(TAG, "buffer_size: %d", width_ * height_ * sizeof(lv_color16_t) / 16);
+
+    lvgl_port_display_cfg_t jc8048w550_cfg = display_cfg;
+    jc8048w550_cfg.buffer_size = static_cast<uint32_t>(width_ * 20);
+    jc8048w550_cfg.color_format = LV_COLOR_FORMAT_RGB565;
+    jc8048w550_cfg.flags.buff_spiram = 1;
+    jc8048w550_cfg.flags.buff_dma = 0;
+    jc8048w550_cfg.flags.swap_bytes = 0;
+    jc8048w550_cfg.flags.full_refresh = 0;
+    jc8048w550_cfg.flags.direct_mode = 0;
+
+    lvgl_port_display_rgb_cfg_t jc8048w550_rgb_cfg = rgb_cfg;
+    jc8048w550_rgb_cfg.flags.bb_mode = false;
+    jc8048w550_rgb_cfg.flags.avoid_tearing = false;
+
+    display_ = lvgl_port_add_disp_rgb(&jc8048w550_cfg, &jc8048w550_rgb_cfg);
+#else
     display_ = lvgl_port_add_disp_rgb(&display_cfg, &rgb_cfg);
+#endif
+    
+
     if (display_ == nullptr) {
         ESP_LOGE(TAG, "Failed to add RGB display");
         return;
