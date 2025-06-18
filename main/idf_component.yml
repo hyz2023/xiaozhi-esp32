@@ -72,3 +72,4 @@ dependencies:
   ## Required IDF version
   idf:
     version: '>=5.4.0'
+  johboh/nlohmann-json: ^3.12.0

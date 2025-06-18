@@ -1,32 +1,47 @@
-set(SOURCES "audio_codecs/audio_codec.cc"
-            "audio_codecs/no_audio_codec.cc"
-            "audio_codecs/box_audio_codec.cc"
-            "audio_codecs/es8311_audio_codec.cc"
-            "audio_codecs/es8374_audio_codec.cc"
-            "audio_codecs/es8388_audio_codec.cc"
-            "audio_processing/audio_debugger.cc"
-            "led/single_led.cc"
-            "led/circular_strip.cc"
-            "led/gpio_led.cc"
-            "display/display.cc"
-            "display/lcd_display.cc"
-            "display/oled_display.cc"
-            "protocols/protocol.cc"
-            "protocols/mqtt_protocol.cc"
-            "protocols/websocket_protocol.cc"
-            "iot/thing.cc"
-            "iot/thing_manager.cc"
-            "mcp_server.cc"
-            "system_info.cc"
-            "application.cc"
-            "ota.cc"
-            "settings.cc"
-            "background_task.cc"
-            "main.cc"
-            )
+# 源文件列表
+set(SOURCES 
+    "main.cc"
+    "application.cc"
+    "background_task.cc"
+    "mcp_server.cc"
+    "ota.cc"
+    "settings.cc"
+    "system_info.cc"
+    "audio_codecs/audio_codec.cc"
+    "audio_codecs/no_audio_codec.cc"
+    "audio_codecs/box_audio_codec.cc"
+    "audio_codecs/es8311_audio_codec.cc"
+    "audio_codecs/es8374_audio_codec.cc"
+    "audio_codecs/es8388_audio_codec.cc"
+    "audio_processing/audio_debugger.cc"
+    "led/single_led.cc"
+    "led/circular_strip.cc"
+    "led/gpio_led.cc"
+    "display/display.cc"
+    "display/lcd_display.cc"
+    "display/oled_display.cc"
+    "display/screens/config/config_manager.cc"
+    "display/screens/config/idle_config.cc"
+    "display/screens/components/widget_base.cc"
+    "display/screens/components/clock_widget.cc"
+    "display/screens/components/weather_widget.cc"
+    "display/screens/components/animation_widget.cc"
+    "protocols/protocol.cc"
+    "protocols/mqtt_protocol.cc"
+    "protocols/websocket_protocol.cc"
+    "iot/thing.cc"
+    "iot/thing_manager.cc"
+)
 
-set(INCLUDE_DIRS "." "display" "audio_codecs" "protocols" "audio_processing")
-list(APPEND INCLUDE_DIRS "$ENV{IDF_PATH}/components/esp_lcd/rgb/include")
+# 包含目录
+set(INCLUDE_DIRS 
+    "."
+    "display"
+    "audio_codecs"
+    "protocols"
+    "audio_processing"
+    "$ENV{IDF_PATH}/components/esp_lcd/rgb/include"
+)
 
 # 添加 IOT 相关文件
 file(GLOB IOT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/iot/things/*.cc)
@@ -199,11 +214,13 @@ elseif(CONFIG_BOARD_TYPE_ELECTRON_BOT)
 elseif(CONFIG_BOARD_TYPE_BREAD_COMPACT_WIFI_CAM)
     set(BOARD_TYPE "bread-compact-wifi-s3cam")
 endif()
-file(GLOB BOARD_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_TYPE}/*.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_TYPE}/*.c
-)
-list(APPEND SOURCES ${BOARD_SOURCES})
+
+# 添加板级文件
+if(BOARD_TYPE)
+    file(GLOB BOARD_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_TYPE}/*.cc)
+    list(APPEND SOURCES ${BOARD_SOURCES})
+    list(APPEND INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_TYPE})
+endif()
 
 if(CONFIG_USE_AUDIO_PROCESSOR)
     list(APPEND SOURCES "audio_processing/afe_audio_processor.cc")
@@ -243,11 +260,13 @@ if(CONFIG_IDF_TARGET_ESP32)
                              )
 endif()
 
-idf_component_register(SRCS ${SOURCES}
-                    EMBED_FILES ${LANG_SOUNDS} ${COMMON_SOUNDS}
-                    INCLUDE_DIRS ${INCLUDE_DIRS}
-                    WHOLE_ARCHIVE
-                    )
+# 注册组件（合并后的配置）
+idf_component_register(
+    SRCS ${SOURCES}
+    EMBED_FILES ${LANG_SOUNDS} ${COMMON_SOUNDS}
+    INCLUDE_DIRS ${INCLUDE_DIRS}
+    WHOLE_ARCHIVE
+)
 
 # 使用 target_compile_definitions 来定义 BOARD_TYPE, BOARD_NAME
 # 如果 BOARD_NAME 为空，则使用 BOARD_TYPE

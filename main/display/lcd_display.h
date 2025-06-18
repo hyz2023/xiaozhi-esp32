@@ -2,6 +2,7 @@
 #define LCD_DISPLAY_H
 
 #include "display.h"
+#include "screens/lcd_idle_screen.h"
 
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
@@ -24,39 +25,50 @@ struct ThemeColors {
 
 
 class LcdDisplay : public Display {
-protected:
-    esp_lcd_panel_io_handle_t panel_io_ = nullptr;
-    esp_lcd_panel_handle_t panel_ = nullptr;
-    
-    lv_draw_buf_t draw_buf_;
-    lv_obj_t* status_bar_ = nullptr;
-    lv_obj_t* content_ = nullptr;
-    lv_obj_t* container_ = nullptr;
-    lv_obj_t* side_bar_ = nullptr;
-    lv_obj_t* preview_image_ = nullptr;
-
-    DisplayFonts fonts_;
-    ThemeColors current_theme_;
-
-    void SetupUI();
-    virtual bool Lock(int timeout_ms = 0) override;
-    virtual void Unlock() override;
-
-protected:
-    // 添加protected构造函数
-    LcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel, DisplayFonts fonts, int width, int height);
-    
 public:
-    ~LcdDisplay();
-    virtual void SetEmotion(const char* emotion) override;
-    virtual void SetIcon(const char* icon) override;
-    virtual void SetPreviewImage(const lv_img_dsc_t* img_dsc) override;
-#if CONFIG_USE_WECHAT_MESSAGE_STYLE
-    virtual void SetChatMessage(const char* role, const char* content) override; 
-#endif  
+    LcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel, DisplayFonts fonts, int width, int height);
+    ~LcdDisplay() override;
 
-    // Add theme switching function
-    virtual void SetTheme(const std::string& theme_name) override;
+    // Display接口实现
+    void Show() override;
+    void Hide() override;
+    void Update() override;
+    bool Lock(int timeout_ms = 0) override;
+    void Unlock() override;
+    void SetTheme(const std::string& theme_name) override;
+    std::string GetTheme() const override { return current_theme_name_; }
+
+    // 待机屏幕接口实现
+    void EnterIdleMode() override;
+    void ExitIdleMode() override;
+
+protected:
+    void SetupUI() override;
+    void SetupIdleScreen() override;
+
+private:
+    esp_lcd_panel_io_handle_t panel_io_;
+    esp_lcd_panel_handle_t panel_;
+    DisplayFonts fonts_;
+    int width_;
+    int height_;
+    lv_display_t* display_ = nullptr;
+    lv_obj_t* container_ = nullptr;
+    lv_obj_t* content_ = nullptr;
+    lv_obj_t* status_bar_ = nullptr;
+    lv_obj_t* side_bar_ = nullptr;
+    lv_obj_t* emotion_label_ = nullptr;
+    lv_obj_t* notification_label_ = nullptr;
+    lv_obj_t* status_label_ = nullptr;
+    lv_obj_t* mute_label_ = nullptr;
+    lv_obj_t* network_label_ = nullptr;
+    lv_obj_t* battery_label_ = nullptr;
+    lv_obj_t* low_battery_popup_ = nullptr;
+    lv_obj_t* low_battery_label_ = nullptr;
+    lv_obj_t* chat_message_label_ = nullptr;
+    lv_obj_t* preview_image_ = nullptr;
+    std::string current_theme_name_;
+    ThemeColors current_theme_;
 };
 
 // RGB LCD显示器

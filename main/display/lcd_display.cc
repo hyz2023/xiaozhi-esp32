@@ -1125,3 +1125,60 @@ void LcdDisplay::SetTheme(const std::string& theme_name) {
     // No errors occurred. Save theme to settings
     Display::SetTheme(theme_name);
 }
+
+void LcdDisplay::SetupIdleScreen() {
+    idle_screen_ = std::make_unique<LcdIdleScreen>(this);
+}
+
+void LcdDisplay::EnterIdleMode() {
+    DisplayLockGuard guard(this);
+    
+    // 隐藏当前内容
+    if (content_) {
+        lv_obj_add_flag(content_, LV_OBJ_FLAG_HIDDEN);
+    }
+    
+    // 显示待机屏幕
+    if (idle_screen_) {
+        idle_screen_->Show();
+    }
+    
+    is_idle_mode_ = true;
+}
+
+void LcdDisplay::ExitIdleMode() {
+    DisplayLockGuard guard(this);
+    
+    // 隐藏待机屏幕
+    if (idle_screen_) {
+        idle_screen_->Hide();
+    }
+    
+    // 显示正常内容
+    if (content_) {
+        lv_obj_clear_flag(content_, LV_OBJ_FLAG_HIDDEN);
+    }
+    
+    is_idle_mode_ = false;
+}
+
+void LcdDisplay::Show() {
+    DisplayLockGuard guard(this);
+    if (container_) {
+        lv_obj_clear_flag(container_, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
+void LcdDisplay::Hide() {
+    DisplayLockGuard guard(this);
+    if (container_) {
+        lv_obj_add_flag(container_, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
+void LcdDisplay::Update() {
+    DisplayLockGuard guard(this);
+    if (is_idle_mode_ && idle_screen_) {
+        idle_screen_->Update();
+    }
+}

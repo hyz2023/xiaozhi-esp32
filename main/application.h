@@ -1,5 +1,4 @@
-#ifndef _APPLICATION_H_
-#define _APPLICATION_H_
+#pragma once
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
@@ -12,6 +11,7 @@
 #include <vector>
 #include <condition_variable>
 #include <memory>
+#include <functional>
 
 #include <opus_encoder.h>
 #include <opus_decoder.h>
@@ -23,6 +23,12 @@
 #include "audio_processor.h"
 #include "wake_word.h"
 #include "audio_debugger.h"
+#include "display/screens/config/config_manager.h"
+#include "display/screens/config/idle_config.h"
+#include "display/screens/components/widget_base.h"
+#include "display/screens/components/clock_widget.h"
+#include "display/screens/components/weather_widget.h"
+#include "display/screens/components/animation_widget.h"
 
 #define SCHEDULE_EVENT (1 << 0)
 #define SEND_AUDIO_EVENT (1 << 1)
@@ -52,17 +58,39 @@ enum DeviceState {
 #define MAX_AUDIO_PACKETS_IN_QUEUE (2400 / OPUS_FRAME_DURATION_MS)
 #define AUDIO_TESTING_MAX_DURATION_MS 10000
 
+namespace xiaozhi {
+
 class Application {
 public:
     static Application& GetInstance() {
         static Application instance;
         return instance;
     }
-    // 删除拷贝构造函数和赋值运算符
-    Application(const Application&) = delete;
-    Application& operator=(const Application&) = delete;
-
+    
+    // 初始化应用
+    void Init();
+    
+    // 启动应用
     void Start();
+    
+    // 停止应用
+    void Stop();
+    
+    // 更新配置
+    void UpdateConfig(const std::string& config_type, const nlohmann::json& config);
+    
+    // 保存配置
+    void SaveConfig(const std::string& config_type);
+    
+    // 加载配置
+    void LoadConfig(const std::string& config_type);
+    
+    // 启动热重载
+    void StartHotReload();
+    
+    // 停止热重载
+    void StopHotReload();
+
     DeviceState GetDeviceState() const { return device_state_; }
     bool IsVoiceDetected() const { return voice_detected_; }
     void Schedule(std::function<void()> callback);
@@ -84,8 +112,26 @@ public:
     BackgroundTask* GetBackgroundTask() const { return background_task_; }
 
 private:
-    Application();
+    Application() = default;
     ~Application();
+    
+    Application(const Application&) = delete;
+    Application& operator=(const Application&) = delete;
+    
+    // 初始化组件
+    void InitWidgets();
+    
+    // 更新组件
+    void UpdateWidgets();
+    
+    // 配置管理器
+    ConfigManager& config_manager_;
+    
+    // 组件列表
+    std::vector<std::shared_ptr<WidgetBase>> widgets_;
+    
+    // 运行标志
+    bool running_{false};
 
     std::unique_ptr<WakeWord> wake_word_;
     std::unique_ptr<AudioProcessor> audio_processor_;
@@ -141,4 +187,4 @@ private:
     void ExitAudioTestingMode();
 };
 
-#endif // _APPLICATION_H_
+} // namespace xiaozhi

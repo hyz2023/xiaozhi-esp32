@@ -5,8 +5,11 @@
 #include <esp_timer.h>
 #include <esp_log.h>
 #include <esp_pm.h>
-
+#include <memory>
 #include <string>
+
+// 前向声明
+class IdleScreen;
 
 struct DisplayFonts {
     const lv_font_t* text_font = nullptr;
@@ -16,8 +19,8 @@ struct DisplayFonts {
 
 class Display {
 public:
-    Display();
-    virtual ~Display();
+    Display() = default;
+    virtual ~Display() = default;
 
     virtual void SetStatus(const char* status);
     virtual void ShowNotification(const char* notification, int duration_ms = 3000);
@@ -27,8 +30,22 @@ public:
     virtual void SetIcon(const char* icon);
     virtual void SetPreviewImage(const lv_img_dsc_t* image);
     virtual void SetTheme(const std::string& theme_name);
-    virtual std::string GetTheme() { return current_theme_name_; }
+    virtual std::string GetTheme() const = 0;
     virtual void UpdateStatusBar(bool update_all = false);
+
+    // 显示控制
+    virtual void Show() = 0;
+    virtual void Hide() = 0;
+    virtual void Update() = 0;
+
+    // 显示锁
+    virtual bool Lock(int timeout_ms = 0) = 0;
+    virtual void Unlock() = 0;
+
+    // 待机屏幕
+    virtual void EnterIdleMode() = 0;
+    virtual void ExitIdleMode() = 0;
+    virtual bool IsIdleMode() const { return is_idle_mode_; }
 
     inline int width() const { return width_; }
     inline int height() const { return height_; }
@@ -57,11 +74,12 @@ protected:
 
     esp_timer_handle_t notification_timer_ = nullptr;
 
-    friend class DisplayLockGuard;
-    virtual bool Lock(int timeout_ms = 0) = 0;
-    virtual void Unlock() = 0;
-};
+    bool is_idle_mode_ = false;
+    std::unique_ptr<IdleScreen> idle_screen_;
+    virtual void SetupIdleScreen() = 0;
 
+    friend class DisplayLockGuard;
+};
 
 class DisplayLockGuard {
 public:

@@ -307,3 +307,66 @@ void OledDisplay::SetupUI_128x32() {
     lv_obj_set_style_anim_duration(chat_message_label_, lv_anim_speed_clamped(60, 300, 60000), LV_PART_MAIN);
 }
 
+void OledDisplay::SetupIdleScreen() {
+    idle_screen_ = std::make_unique<OledIdleScreen>(this);
+}
+
+void OledDisplay::EnterIdleMode() {
+    DisplayLockGuard guard(this);
+    
+    // 隐藏当前内容
+    if (content_) {
+        lv_obj_add_flag(content_, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (content_right_) {
+        lv_obj_add_flag(content_right_, LV_OBJ_FLAG_HIDDEN);
+    }
+    
+    // 显示待机屏幕
+    if (idle_screen_) {
+        idle_screen_->Show();
+    }
+    
+    is_idle_mode_ = true;
+}
+
+void OledDisplay::ExitIdleMode() {
+    DisplayLockGuard guard(this);
+    
+    // 隐藏待机屏幕
+    if (idle_screen_) {
+        idle_screen_->Hide();
+    }
+    
+    // 显示正常内容
+    if (content_) {
+        lv_obj_clear_flag(content_, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (content_right_) {
+        lv_obj_clear_flag(content_right_, LV_OBJ_FLAG_HIDDEN);
+    }
+    
+    is_idle_mode_ = false;
+}
+
+void OledDisplay::Show() {
+    DisplayLockGuard guard(this);
+    if (container_) {
+        lv_obj_clear_flag(container_, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
+void OledDisplay::Hide() {
+    DisplayLockGuard guard(this);
+    if (container_) {
+        lv_obj_add_flag(container_, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
+void OledDisplay::Update() {
+    DisplayLockGuard guard(this);
+    if (is_idle_mode_ && idle_screen_) {
+        idle_screen_->Update();
+    }
+}
+

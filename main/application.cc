@@ -34,6 +34,7 @@
 
 #define TAG "Application"
 
+namespace xiaozhi {
 
 static const char* const STATE_STRINGS[] = {
     "unknown",
@@ -90,6 +91,7 @@ Application::Application() {
 }
 
 Application::~Application() {
+    Stop();
     if (clock_timer_handle_ != nullptr) {
         esp_timer_stop(clock_timer_handle_);
         esp_timer_delete(clock_timer_handle_);
@@ -98,6 +100,88 @@ Application::~Application() {
         delete background_task_;
     }
     vEventGroupDelete(event_group_);
+}
+
+void Application::Init() {
+    // 初始化配置管理器
+    config_manager_.Init();
+    
+    // 初始化组件
+    InitWidgets();
+}
+
+void Application::Start() {
+    if (running_) {
+        return;
+    }
+    
+    running_ = true;
+    
+    // 启动热重载
+    StartHotReload();
+    
+    // 更新组件
+    UpdateWidgets();
+}
+
+void Application::Stop() {
+    if (!running_) {
+        return;
+    }
+    
+    running_ = false;
+    
+    // 停止热重载
+    StopHotReload();
+}
+
+void Application::UpdateConfig(const std::string& config_type, const nlohmann::json& config) {
+    if (config_type == "idle") {
+        auto idle_config = std::make_shared<IdleConfig>();
+        idle_config->FromJson(config);
+        config_manager_.UpdateConfig("idle", *idle_config);
+    }
+}
+
+void Application::SaveConfig(const std::string& config_type) {
+    config_manager_.SaveConfig(config_type);
+}
+
+void Application::LoadConfig(const std::string& config_type) {
+    config_manager_.LoadConfig(config_type);
+}
+
+void Application::StartHotReload() {
+    config_manager_.StartHotReload();
+}
+
+void Application::StopHotReload() {
+    config_manager_.StopHotReload();
+}
+
+void Application::InitWidgets() {
+    // 创建时钟组件
+    auto clock_widget = std::make_shared<ClockWidget>(nullptr);
+    widgets_.push_back(clock_widget);
+    
+    // 创建天气组件
+    auto weather_widget = std::make_shared<WeatherWidget>(nullptr);
+    widgets_.push_back(weather_widget);
+    
+    // 创建动画组件
+    auto animation_widget = std::make_shared<AnimationWidget>(nullptr);
+    widgets_.push_back(animation_widget);
+    
+    // 注册配置观察者
+    for (auto& widget : widgets_) {
+        config_manager_.RegisterObserver("idle", widget.get());
+    }
+}
+
+void Application::UpdateWidgets() {
+    for (auto& widget : widgets_) {
+        widget->Update();
+    }
 }
 
 void Application::CheckNewVersion() {
@@ -1140,3 +1224,5 @@ void Application::SetAecMode(AecMode mode) {
         }
     });
 }
+
+} // namespace xiaozhi
