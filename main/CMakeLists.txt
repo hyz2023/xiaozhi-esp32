@@ -11,6 +11,12 @@ set(SOURCES "audio_codecs/audio_codec.cc"
             "display/display.cc"
             "display/lcd_display.cc"
             "display/oled_display.cc"
+            "display/idle_display.cc"
+            "display/widgets/base_widget.cc"
+            "display/widgets/clock_widget.cc"
+            "display/widgets/weather_widget.cc"
+            "display/widgets/animation_widget.cc"
+            "display/config/idle_config.cc"
             "protocols/protocol.cc"
             "protocols/mqtt_protocol.cc"
             "protocols/websocket_protocol.cc"
@@ -25,7 +31,7 @@ set(SOURCES "audio_codecs/audio_codec.cc"
             "main.cc"
             )
 
-set(INCLUDE_DIRS "." "display" "audio_codecs" "protocols" "audio_processing")
+set(INCLUDE_DIRS "." "display" "display/widgets" "display/config" "audio_codecs" "protocols" "audio_processing")
 list(APPEND INCLUDE_DIRS "$ENV{IDF_PATH}/components/esp_lcd/rgb/include")
 
 # 添加 IOT 相关文件
