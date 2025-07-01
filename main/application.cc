@@ -408,6 +408,7 @@ void Application::Start() {
 
     /* Setup the display */
     auto display = board.GetDisplay();
+    
 
     /* Setup the audio codec */
     auto codec = board.GetAudioCodec();
@@ -714,6 +715,12 @@ void Application::Start() {
     // Print heap stats
     SystemInfo::PrintHeapStats();
     
+    // Init and start the idle display（确保LVGL驱动已注册后再启动IdleDisplay）
+    ESP_LOGI("Application", "Before IdleDisplay::Init, lv_display_get_default() = %p", lv_display_get_default());
+    IdleDisplay::GetInstance().Init();
+    // ESP_LOGI("Application", "Before IdleDisplay::Start, lv_display_get_default() = %p", lv_display_get_default());
+    // IdleDisplay::GetInstance().Start();
+
     // Enter the main event loop
     MainEventLoop();
 }
@@ -963,7 +970,7 @@ void Application::SetDeviceState(DeviceState state) {
     if (device_state_ == state) {
         return;
     }
-    
+
     clock_ticks_ = 0;
     auto previous_state = device_state_;
     device_state_ = state;
@@ -975,36 +982,48 @@ void Application::SetDeviceState(DeviceState state) {
     auto display = board.GetDisplay();
     auto led = board.GetLed();
     led->OnStateChanged();
+
+    // --- 状态与显示切换统一管理 ---
+    // 只在Idle状态显示IdleDisplay，其他状态关闭IdleDisplay
+    if (state == kDeviceStateIdle) {
+        IdleDisplay::GetInstance().Start();
+    } else {
+        IdleDisplay::GetInstance().Stop();
+    }
+    // --- end ---
+
     switch (state) {
         case kDeviceStateUnknown:
         case kDeviceStateIdle:
-            display->SetStatus(Lang::Strings::STANDBY);
-            display->SetEmotion("neutral");
+            if (display) {
+                display->SetStatus(Lang::Strings::STANDBY);
+                display->SetEmotion("neutral");
+            }
             audio_processor_->Stop();
             wake_word_->StartDetection();
             break;
         case kDeviceStateConnecting:
-            display->SetStatus(Lang::Strings::CONNECTING);
-            display->SetEmotion("neutral");
-            display->SetChatMessage("system", "");
+            if (display) {
+                display->SetStatus(Lang::Strings::CONNECTING);
+                display->SetEmotion("neutral");
+                display->SetChatMessage("system", "");
+            }
             timestamp_queue_.clear();
             break;
         case kDeviceStateListening:
-            display->SetStatus(Lang::Strings::LISTENING);
-            display->SetEmotion("neutral");
-            // Update the IoT states before sending the start listening command
+            if (display) {
+                display->SetStatus(Lang::Strings::LISTENING);
+                display->SetEmotion("neutral");
+            }
 #if CONFIG_IOT_PROTOCOL_XIAOZHI
             UpdateIotStates();
 #endif
-
             // Make sure the audio processor is running
             if (!audio_processor_->IsRunning()) {
-                // Send the start listening command
                 protocol_->SendStartListening(listening_mode_);
                 if (previous_state == kDeviceStateSpeaking) {
                     audio_decode_queue_.clear();
                     audio_decode_cv_.notify_all();
-                    // FIXME: Wait for the speaker to empty the buffer
                     vTaskDelay(pdMS_TO_TICKS(120));
                 }
                 opus_encoder_->ResetState();
@@ -1013,11 +1032,11 @@ void Application::SetDeviceState(DeviceState state) {
             }
             break;
         case kDeviceStateSpeaking:
-            display->SetStatus(Lang::Strings::SPEAKING);
-
+            if (display) {
+                display->SetStatus(Lang::Strings::SPEAKING);
+            }
             if (listening_mode_ != kListeningModeRealtime) {
                 audio_processor_->Stop();
-                // Only AFE wake word can be detected in speaking mode
 #if CONFIG_USE_AFE_WAKE_WORD
                 wake_word_->StartDetection();
 #else
@@ -1139,4 +1158,18 @@ void Application::SetAecMode(AecMode mode) {
             protocol_->CloseAudioChannel();
         }
     });
+}
+
+void Application::EnterIdleMode() {
+    // 启动待机显示
+    IdleDisplay::GetInstance().Start();
+    // 更新系统状态
+    SetDeviceState(kDeviceStateIdle);
+}
+
+void Application::ExitIdleMode() {
+    // 停止待机显示
+    IdleDisplay::GetInstance().Stop();
+    // 更新系统状态
+    SetDeviceState(kDeviceStateUnknown); // 或kDeviceStateNormal，视具体定义
 }

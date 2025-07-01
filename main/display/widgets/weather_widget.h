@@ -2,6 +2,7 @@
 #define WEATHER_WIDGET_H
 
 #include "base_widget.h"
+#include "idle_display.h"
 #include <string>
 #include <vector>
 

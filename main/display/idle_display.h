@@ -2,6 +2,7 @@
 #define IDLE_DISPLAY_H
 
 #include <lvgl.h>
+#include <esp_timer.h>
 #include <memory>
 #include <vector>
 #include <string>
@@ -124,6 +125,9 @@ public:
     lv_obj_t* GetMainScreen() const { return main_screen_; }
     const IdleTheme& GetTheme() const { return theme_; }
     const LayoutConfig& GetLayout() const { return layout_; }
+    
+    // 动画定时器回调 - 改为public
+    void OnAnimationTimer();
 
 private:
     IdleDisplay();
@@ -136,7 +140,6 @@ private:
     void ApplyTheme();
     void StartAnimationTimer();
     void StopAnimationTimer();
-    void OnAnimationTimer();
     
     // 成员变量
     bool is_active_ = false;

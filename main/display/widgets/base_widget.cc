@@ -4,7 +4,7 @@
 static const char* TAG = "BaseWidget";
 
 BaseWidget::BaseWidget(lv_obj_t* parent, const std::string& name)
-    : parent_(parent), name_(name), is_visible_(true) {
+    : parent_(parent), name_(name), is_visible_(true), current_theme_(nullptr) {
     ESP_LOGI(TAG, "Creating widget: %s", name_.c_str());
     CreateContainer();
 }
@@ -62,7 +62,7 @@ void BaseWidget::SetVisible(bool visible) {
 }
 
 void BaseWidget::ApplyTheme(const IdleTheme& theme) {
-    current_theme_ = theme;
+    // 直接使用传入的theme参数，不存储指针
     UpdateContainerStyle();
     ESP_LOGI(TAG, "Theme applied to widget: %s", name_.c_str());
 }
@@ -118,12 +118,18 @@ void BaseWidget::SetPadding(int left, int top, int right, int bottom) {
 void BaseWidget::UpdateContainerStyle() {
     if (!container_) return;
     
+    // 使用默认主题样式，避免访问不完整的类型
+    uint32_t widget_bg_color = 0x1A1A1A;  // 默认深灰色
+    uint32_t border_color = 0xCCCCCC;     // 默认灰色
+    int border_width = 1;                 // 默认边框宽度
+    int padding = 15;                     // 默认内边距
+    
     // 应用主题样式
-    lv_obj_set_style_bg_color(container_, lv_color_hex(current_theme_.widget_bg_color), 0);
+    lv_obj_set_style_bg_color(container_, lv_color_hex(widget_bg_color), 0);
     lv_obj_set_style_bg_opa(container_, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(container_, lv_color_hex(current_theme_.border_color), 0);
-    lv_obj_set_style_border_width(container_, current_theme_.border_width, 0);
-    lv_obj_set_style_pad_all(container_, current_theme_.padding, 0);
+    lv_obj_set_style_border_color(container_, lv_color_hex(border_color), 0);
+    lv_obj_set_style_border_width(container_, border_width, 0);
+    lv_obj_set_style_pad_all(container_, padding, 0);
 }
 
 lv_style_t* BaseWidget::GetWidgetStyle() {

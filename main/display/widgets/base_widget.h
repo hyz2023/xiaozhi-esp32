@@ -49,8 +49,8 @@ protected:
     int width_ = 0;
     int height_ = 0;
     
-    // 主题相关
-    IdleTheme current_theme_;
+    // 主题相关 - 改为指针类型
+    IdleTheme* current_theme_ = nullptr;
     
     // 工具方法
     void CreateContainer();

@@ -50,6 +50,9 @@ void IdleDisplay::Init() {
     layout_.show_lunar = true;
     layout_.show_air_quality = true;
     layout_.show_uv_index = true;
+
+    ESP_LOGI(TAG, "lv_display_get_default() = %p", lv_display_get_default());
+    assert(lv_display_get_default() != nullptr);
     
     ESP_LOGI(TAG, "IdleDisplay initialized");
 }
@@ -57,6 +60,11 @@ void IdleDisplay::Init() {
 void IdleDisplay::Start() {
     if (is_active_) {
         ESP_LOGW(TAG, "IdleDisplay is already active");
+        return;
+    }
+    if (lv_display_get_default() == nullptr) {
+        ESP_LOGW("IdleDisplay", "LVGL未初始化，待机显示延迟启动");
+        // 可选：设置标志，主循环或定时器里重试
         return;
     }
     
@@ -75,6 +83,9 @@ void IdleDisplay::Start() {
         lv_scr_load(main_screen_);
     }
     
+    ESP_LOGI(TAG, "lv_display_get_default() = %p", lv_display_get_default());
+    assert(lv_display_get_default() != nullptr);
+
     ESP_LOGI(TAG, "IdleDisplay started successfully");
 }
 

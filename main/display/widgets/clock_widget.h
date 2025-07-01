@@ -2,6 +2,7 @@
 #define CLOCK_WIDGET_H
 
 #include "base_widget.h"
+#include "idle_display.h"  // 包含 ClockData 和 LayoutConfig 的完整定义
 #include <string>
 
 // 前向声明

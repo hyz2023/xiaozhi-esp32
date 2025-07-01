@@ -2,6 +2,8 @@
 #define ANIMATION_WIDGET_H
 
 #include "base_widget.h"
+#include "idle_display.h"
+#include <esp_timer.h>
 #include <string>
 #include <vector>
 
@@ -35,6 +37,7 @@ public:
     void SetFramePaths(const std::vector<std::string>& paths);
     void SetCurrentFrame(int frame_index);
     void ShowFrame(int frame_index);
+    void OnFrameTimer();
     
 private:
     // 私有方法
@@ -46,7 +49,10 @@ private:
     void UpdateFrameDisplay();
     void StartFrameTimer();
     void StopFrameTimer();
-    void OnFrameTimer();
+    void UpdateAnimation();
+    void UpdateInfo();
+    void ApplyTextStyles();
+    
     
     // UI元素
     lv_obj_t* image_widget_ = nullptr;
